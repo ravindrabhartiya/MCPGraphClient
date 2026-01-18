@@ -2,6 +2,31 @@
 
 This document describes the OAuth 2.0 Authorization Code flow with Client Secret used by the MCP Enterprise Client to authenticate with the Microsoft MCP Server for Enterprise.
 
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        MCP Client                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. Load config ──► appsettings.json                            │
+│         │                                                        │
+│         ▼                                                        │
+│  2. Check Key Vault ──► Azure Key Vault (secrets)               │
+│         │              └── AzureAD--ClientSecret                │
+│         │              └── AzureOpenAI--ApiKey                  │
+│         │              (accessed via DefaultAzureCredential)    │
+│         ▼                                                        │
+│  3. Check token cache ──► %LOCALAPPDATA%\McpEnterpriseClient\   │
+│         │                  msal_token_cache.bin                  │
+│         │                                                        │
+│         ├── Cache hit? ──► Silent auth (no browser)             │
+│         │                                                        │
+│         └── Cache miss? ──► Interactive browser login           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ## Flow Diagram
 
 ```
@@ -74,6 +99,36 @@ The token contains all the MCP scopes the user has consented to:
 
 ## Configuration
 
+### Azure Key Vault (Recommended)
+
+Store secrets securely in Azure Key Vault:
+
+| Secret Name | Value | Purpose |
+|-------------|-------|---------|
+| `AzureAD--ClientSecret` | Your app's client secret | Proves app identity during token exchange |
+| `AzureOpenAI--ApiKey` | Your OpenAI API key | Authenticates with Azure OpenAI |
+
+Access Key Vault using `DefaultAzureCredential`:
+- **Local dev**: Uses `az login` credentials
+- **Azure deployment**: Uses Managed Identity
+
+### appsettings.json
+
+```json
+{
+  "KeyVault": {
+    "Uri": "https://mcpclient.vault.azure.net/"
+  },
+  "AzureAD": {
+    "TenantId": "73033f9b-432b-46ea-946f-7c0a6e57ac2b",
+    "ClientId": "a68ffc23-3384-4304-b6ed-355940bd0f2a",
+    "ClientSecret": ""  // Loaded from Key Vault
+  }
+}
+```
+
+### Legacy Configuration (Not Recommended)
+
 | Setting | Value | Purpose |
 |---------|-------|---------|
 | `client_id` | `a68ffc23-3384-4304-b6ed-355940bd0f2a` | Identifies your app in Azure AD |
@@ -83,6 +138,46 @@ The token contains all the MCP scopes the user has consented to:
 | `scopes` | `https://mcp.svc.cloud.microsoft/MCP.User.Read.All` | What permissions to request |
 
 ## Code Implementation
+
+### Loading Secrets from Key Vault
+
+```csharp
+var configBuilder = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true)
+    .AddEnvironmentVariables();
+
+var keyVaultUri = baseConfig["KeyVault:Uri"];
+if (!string.IsNullOrEmpty(keyVaultUri))
+{
+    var kvCredential = new DefaultAzureCredential();
+    configBuilder.AddAzureKeyVault(new Uri(keyVaultUri), kvCredential);
+}
+var configuration = configBuilder.Build();
+```
+
+### Token Caching
+
+```csharp
+private static readonly string TokenCacheFile = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "McpEnterpriseClient", "msal_token_cache.bin");
+
+private static void EnableTokenCache(ITokenCache tokenCache)
+{
+    tokenCache.SetBeforeAccess(args =>
+    {
+        if (File.Exists(TokenCacheFile))
+            args.TokenCache.DeserializeMsalV3(File.ReadAllBytes(TokenCacheFile));
+    });
+    
+    tokenCache.SetAfterAccess(args =>
+    {
+        if (args.HasStateChanged)
+            File.WriteAllBytes(TokenCacheFile, args.TokenCache.SerializeMsalV3());
+    });
+}
+```
 
 ### Building the Confidential Client
 

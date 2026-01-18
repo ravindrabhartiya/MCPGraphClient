@@ -373,11 +373,35 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
 Microsoft's MCP Server for Enterprise opens up powerful possibilities for:
 
 - **Security teams** investigating incidents
-- **IT admins** auditing their tenant
-- **Developers** building governance automation
-- **Compliance officers** generating reports
+  - *"Show me all failed sign-in attempts from outside the US in the last 24 hours"*
+  - *"Which users have risky sign-ins flagged by Identity Protection?"*
+  - *"List all service principals with expiring credentials"*
 
-The combination of natural language understanding (Azure OpenAI) and structured API access (MCP Server) makes complex Graph API queries accessible to everyone.
+- **IT admins** auditing their tenant
+  - *"How many guest users do we have and when were they last active?"*
+  - *"Show me all groups without owners or with only one owner"*
+  - *"Which users have direct license assignments instead of group-based?"*
+
+- **Developers** building governance automation
+  - *"Find all app registrations with secrets expiring in the next 30 days"*
+  - *"List custom roles and their assignments"*
+  - *"Show me all dynamic groups and their membership rules"*
+
+- **Compliance officers** generating reports
+  - *"Which admin accounts don't have MFA enabled?"*
+  - *"List all users with privileged role assignments"*
+  - *"Show me audit logs for directory role changes this month"*
+
+The combination of natural language understanding (Azure OpenAI) and structured API access (MCP Server) makes complex Graph API queries accessible to everyone – no need to memorize OData syntax or navigate API documentation.
+
+### What's Next?
+
+Once you're comfortable with the basics, consider:
+
+1. **Building scheduled agents** that run daily health checks
+2. **Creating alert workflows** that notify on policy violations  
+3. **Generating automated reports** for compliance requirements
+4. **Integrating with ticketing systems** for automated remediation
 
 ## Resources
 

@@ -460,7 +460,7 @@ namespace McpEnterpriseClient
             
             // Add system message to guide the AI
             messages.Add(new SystemChatMessage(
-                "You are a helpful assistant that can query Microsoft 365 tenant data using Microsoft Graph API. " +
+                "You are a helpful assistant that can query Microsoft Entra tenant data using Microsoft Graph API. " +
                 "You have access to tools that let you discover and execute Graph API calls. " +
                 "Always use microsoft_graph_suggest_queries first to find the right API endpoint, " +
                 "then use microsoft_graph_get to execute it."));

@@ -1,6 +1,6 @@
 # Microsoft MCP Server for Enterprise - C# Client
 
-A C# console application that connects to Microsoft's MCP (Model Context Protocol) Server for Enterprise, enabling AI-powered queries against your Microsoft 365 tenant data using Microsoft Graph API.
+A C# console application that connects to Microsoft's MCP (Model Context Protocol) Server for Enterprise, enabling AI-powered queries against your Microsoft Entra tenant data using Microsoft Graph API.
 
 ## ✅ What's Working
 
@@ -16,7 +16,7 @@ A C# console application that connects to Microsoft's MCP (Model Context Protoco
 ## Architecture
 
 ```
-User Question → Azure OpenAI (gpt-4o) → MCP Tools → Microsoft Graph API → Your M365 Tenant Data
+User Question → Azure OpenAI (gpt-4o) → MCP Tools → Microsoft Graph API → Your Entra Tenant Data
 ```
 
 The application uses:
@@ -31,7 +31,7 @@ The application uses:
 - Azure subscription
 - Azure OpenAI resource with `gpt-4o` model deployed
 - Azure AD app registration (service principal)
-- Microsoft 365 tenant (for querying data)
+- Microsoft Entra tenant (for querying data)
 
 ## Setup Instructions
 

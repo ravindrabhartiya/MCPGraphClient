@@ -285,7 +285,62 @@ Response: "Found 3 policies without MFA requirement:
 
 ## Building Automated Agents
 
-Once you have the basic client working, you can build automated agents:
+Once you have the basic client working, you can evolve it into fully automated agents. The patterns shown here can be extended using the **Microsoft Agent Framework** (also known as Azure AI Agent Service) for production-grade agent deployments.
+
+### Why Build Agents?
+
+Manual querying is great for ad-hoc investigations, but many scenarios benefit from automation:
+
+| Use Case | Manual | Automated Agent |
+|----------|--------|-----------------|
+| Daily stale account check | ❌ Tedious | ✅ Scheduled job |
+| Compliance reporting | ❌ Time-consuming | ✅ Weekly email reports |
+| Security incident response | ❌ Slow | ✅ Real-time alerts |
+| Onboarding audits | ❌ Easy to forget | ✅ Triggered workflows |
+
+### Agent Architecture Patterns
+
+There are several ways to structure your Entra agents:
+
+**Pattern 1: Simple Scheduled Agent**
+```
+Timer Trigger → Query MCP Server → Generate Report → Send Email/Teams
+```
+
+**Pattern 2: Event-Driven Agent**
+```
+Azure Event Grid (Entra events) → Process Event → Query Context → Take Action
+```
+
+**Pattern 3: Conversational Agent (with Microsoft Agent Framework)**
+```
+User Message → Agent Framework → Orchestrate Tools → MCP Server → Response
+```
+
+### Using Microsoft Agent Framework
+
+The [Microsoft Agent Framework](https://learn.microsoft.com/azure/ai-services/agents/) provides enterprise-grade capabilities for building AI agents:
+
+- **Tool orchestration** – Automatically select and chain tools
+- **Memory and context** – Maintain conversation state across sessions
+- **Tracing and observability** – Debug agent behavior with built-in telemetry
+- **Multi-agent patterns** – Coordinate multiple specialized agents
+
+Here's how you might integrate MCP tools with the Agent Framework:
+
+```csharp
+using Microsoft.Extensions.AI;
+
+// Register MCP tools with the Agent Framework
+var agentBuilder = new AgentBuilder()
+    .WithModel("gpt-4o")
+    .WithSystemPrompt("You are an Entra security analyst...")
+    .WithTools(mcpTools);  // MCP tools from the server
+
+// The agent automatically orchestrates tool calls
+var agent = agentBuilder.Build();
+var response = await agent.RunAsync("Check for risky sign-ins today");
+```
 
 ### Example: Daily Stale Account Report
 
@@ -306,28 +361,138 @@ public class StaleAccountAgent
         
         return ParseUsers(result);
     }
+    
+    public async Task RunDailyReportAsync()
+    {
+        var staleUsers = await GetStaleAccountsAsync();
+        
+        if (staleUsers.Count > 0)
+        {
+            var report = GenerateHtmlReport(staleUsers);
+            await SendEmailAsync("security-team@contoso.com", "Daily Stale Account Report", report);
+            
+            // Optionally create tickets for follow-up
+            foreach (var user in staleUsers.Where(u => u.DaysSinceLastSignIn > 180))
+            {
+                await CreateServiceNowTicketAsync($"Review stale account: {user.UserPrincipalName}");
+            }
+        }
+    }
 }
 ```
 
 ### Example: Group Governance Agent
 
+This agent runs on a schedule and identifies governance issues across all groups:
+
 ```csharp
 public class GroupGovernanceAgent
 {
+    private readonly IMcpClient _mcpClient;
+    private readonly ILogger _logger;
+    
     public async Task<GroupHealthReport> AnalyzeGroupHealthAsync()
     {
         var report = new GroupHealthReport();
         
-        // Groups without owners
+        // Groups without owners - security risk!
         report.GroupsWithoutOwners = await GetGroupsWithoutOwnersAsync();
+        _logger.LogInformation($"Found {report.GroupsWithoutOwners.Count} groups without owners");
         
-        // Groups without members
+        // Groups without members - cleanup candidates
         report.EmptyGroups = await GetEmptyGroupsAsync();
         
         // Stale groups (no activity in 180 days)
         report.StaleGroups = await GetStaleGroupsAsync();
         
+        // Groups with excessive members (potential oversharing)
+        report.LargeGroups = await GetGroupsWithMemberCountOver(1000);
+        
         return report;
+    }
+    
+    public async Task RemediateAsync(GroupHealthReport report)
+    {
+        // Auto-assign IT as owner for orphaned groups
+        foreach (var group in report.GroupsWithoutOwners)
+        {
+            await AssignDefaultOwnerAsync(group.Id, "it-admins@contoso.com");
+            await CreateAuditLogAsync($"Auto-assigned owner to group: {group.DisplayName}");
+        }
+        
+        // Send notifications for groups requiring human review
+        await NotifySecurityTeamAsync(report.LargeGroups, "Groups with excessive membership");
+    }
+}
+```
+
+### Example: Security Incident Response Agent
+
+For real-time security monitoring, combine MCP with Azure Event Grid:
+
+```csharp
+public class SecurityIncidentAgent
+{
+    // Triggered when Identity Protection detects a risky sign-in
+    public async Task HandleRiskySignInAsync(RiskySignInEvent signInEvent)
+    {
+        // Get more context about the user
+        var userDetails = await _mcpClient.CallToolAsync("microsoft_graph_get", new
+        {
+            relativeUrl = $"/v1.0/users/{signInEvent.UserId}?$select=displayName,department,jobTitle,manager"
+        });
+        
+        // Check recent activity
+        var recentSignIns = await GetRecentSignInsAsync(signInEvent.UserId, hours: 24);
+        
+        // Use AI to analyze the pattern
+        var analysis = await _aiClient.AnalyzeAsync($@"
+            User {userDetails.DisplayName} ({userDetails.JobTitle}) had a risky sign-in.
+            Location: {signInEvent.Location}
+            Risk Level: {signInEvent.RiskLevel}
+            Recent sign-ins: {recentSignIns.Count} in last 24 hours from {recentSignIns.DistinctLocations} locations.
+            
+            Is this likely a true positive or false positive? What actions should we take?
+        ");
+        
+        // Take automated action based on risk
+        if (analysis.RecommendedAction == "Block")
+        {
+            await BlockUserSignInsAsync(signInEvent.UserId);
+            await NotifySecurityTeamAsync(signInEvent, analysis, Priority.High);
+        }
+    }
+}
+```
+
+### Multi-Agent Orchestration
+
+For complex scenarios, you can orchestrate multiple specialized agents:
+
+```csharp
+// Coordinator agent that delegates to specialists
+public class EntraSecurityCoordinator
+{
+    private readonly StaleAccountAgent _staleAccountAgent;
+    private readonly GroupGovernanceAgent _groupAgent;
+    private readonly SecurityIncidentAgent _securityAgent;
+    
+    public async Task RunDailySecurityReviewAsync()
+    {
+        var tasks = new List<Task<AgentReport>>
+        {
+            _staleAccountAgent.RunAsync(),
+            _groupAgent.RunAsync(),
+            _securityAgent.GetDailySummaryAsync()
+        };
+        
+        var reports = await Task.WhenAll(tasks);
+        
+        // Aggregate findings
+        var executiveSummary = await _aiClient.SummarizeAsync(reports);
+        
+        // Post to Teams security channel
+        await _teamsClient.PostAdaptiveCardAsync("Security-Alerts", executiveSummary);
     }
 }
 ```

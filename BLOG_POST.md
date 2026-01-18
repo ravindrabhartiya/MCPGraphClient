@@ -1,6 +1,6 @@
-# Building an AI-Powered Microsoft Entra Investigation Tool with MCP Server
+# Query Microsoft Entra with Natural Language Using MCP Server
 
-**How to use Microsoft's MCP Server for Enterprise to query your Entra tenant with natural language**
+**Build AI agents that investigate your tenant using Microsoft Graph**
 
 ---
 

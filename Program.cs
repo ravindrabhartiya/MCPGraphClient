@@ -446,7 +446,7 @@ namespace McpEnterpriseClient
             IList<McpClientTool> tools)
         {
             Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Console.WriteLine("Interactive Mode - Ask questions about your Microsoft 365 tenant");
+            Console.WriteLine("Interactive Mode - Ask questions about your Microsoft Entra tenant");
             Console.WriteLine("Examples:");
             Console.WriteLine("  • How many users do we have in our tenant?");
             Console.WriteLine("  • List all users who didn't sign in last month");

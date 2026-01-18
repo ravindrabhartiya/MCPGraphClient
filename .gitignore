@@ -1,0 +1,33 @@
+# .NET build outputs
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+
+# Visual Studio
+.vs/
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# Configuration files with secrets
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+# Environment files
+.env
+.env.local
+
+# Token cache
+msal_token_cache.bin
+
+# OS files
+.DS_Store
+Thumbs.db

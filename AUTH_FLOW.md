@@ -12,9 +12,9 @@ This document describes the OAuth 2.0 Authorization Code flow with Client Secret
 │  1. Load config ──► appsettings.json                            │
 │         │                                                        │
 │         ▼                                                        │
-│  2. Check Key Vault ──► Azure Key Vault (secrets)               │
-│         │              └── AzureAD--ClientSecret                │
-│         │              └── AzureOpenAI--ApiKey                  │
+│  2. Check Key Vault ──► Azure Key Vault (all config)            │
+│         │              └── AzureAD--TenantId, ClientId, Secret  │
+│         │              └── AzureOpenAI--Endpoint, ApiKey        │
 │         │              (accessed via DefaultAzureCredential)    │
 │         ▼                                                        │
 │  3. Check token cache ──► %LOCALAPPDATA%\McpEnterpriseClient\   │
@@ -86,7 +86,7 @@ Your app registration has a client secret, making it a "confidential client" tha
 The MCP Server requires **delegated (user) permissions**, not app-only. This flow gets a token that represents the **user**, not just the app. The token contains claims about both the application and the signed-in user.
 
 ### 3. Client Secret Required
-Unlike public clients, your app must prove its identity with the client secret during the token exchange (Step 5). This is why `InteractiveBrowserCredential` and `DeviceCodeCredential` from Azure.Identity failed - they don't support passing client secrets for interactive flows.
+Unlike public clients, your app must prove its identity with the client secret during the token exchange (Step 5). The `ConfidentialClientApplication` from MSAL.NET handles this by including the client secret when exchanging the authorization code for tokens.
 
 ### 4. MCP Scopes
 The token contains all the MCP scopes the user has consented to:
@@ -101,12 +101,15 @@ The token contains all the MCP scopes the user has consented to:
 
 ### Azure Key Vault (Recommended)
 
-Store secrets securely in Azure Key Vault:
+Store all configuration securely in Azure Key Vault:
 
-| Secret Name | Value | Purpose |
-|-------------|-------|---------|
-| `AzureAD--ClientSecret` | Your app's client secret | Proves app identity during token exchange |
-| `AzureOpenAI--ApiKey` | Your OpenAI API key | Authenticates with Azure OpenAI |
+| Secret Name | Purpose |
+|-------------|---------||
+| `AzureAD--TenantId` | Azure AD Tenant ID |
+| `AzureAD--ClientId` | App Registration Client ID |
+| `AzureAD--ClientSecret` | Proves app identity during token exchange |
+| `AzureOpenAI--Endpoint` | Azure OpenAI service endpoint |
+| `AzureOpenAI--ApiKey` | Authenticates with Azure OpenAI |
 
 Access Key Vault using `DefaultAzureCredential`:
 - **Local dev**: Uses `az login` credentials
@@ -120,12 +123,19 @@ Access Key Vault using `DefaultAzureCredential`:
     "Uri": "https://mcpclient.vault.azure.net/"
   },
   "AzureAD": {
-    "TenantId": "73033f9b-432b-46ea-946f-7c0a6e57ac2b",
-    "ClientId": "a68ffc23-3384-4304-b6ed-355940bd0f2a",
-    "ClientSecret": ""  // Loaded from Key Vault
+    "TenantId": "",
+    "ClientId": "",
+    "ClientSecret": ""
+  },
+  "AzureOpenAI": {
+    "Endpoint": "",
+    "DeploymentName": "gpt-4o",
+    "ApiKey": ""
   }
 }
 ```
+
+All values except `DeploymentName` are loaded from Key Vault at runtime.
 
 ### Legacy Configuration (Not Recommended)
 

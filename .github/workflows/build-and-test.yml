@@ -28,12 +28,15 @@ jobs:
 
     - name: Restore dependencies
       run: dotnet restore "MCP Client.sln"
+      working-directory: ${{ github.workspace }}
 
     - name: Build
       run: dotnet build "MCP Client.sln" --configuration Release --no-restore
+      working-directory: ${{ github.workspace }}
 
     - name: Test
       run: dotnet test "MCP Client.sln" --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults
+      working-directory: ${{ github.workspace }}
 
     - name: Upload test results
       uses: actions/upload-artifact@v4

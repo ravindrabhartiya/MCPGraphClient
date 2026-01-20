@@ -4,18 +4,32 @@ A .NET 8 console application that connects to Microsoft's Model Context Protocol
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Running the Application](#running-the-application)
-- [Example Queries](#example-queries)
-- [Testing](#testing)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
+- [MCP Enterprise Client](#mcp-enterprise-client)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Features](#features)
+  - [Architecture](#architecture)
+    - [Component Flow](#component-flow)
+  - [Project Structure](#project-structure)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+    - [Azure AD App Registration](#azure-ad-app-registration)
+    - [Configuration Options](#configuration-options)
+      - [Using appsettings.json](#using-appsettingsjson)
+      - [Using Environment Variables](#using-environment-variables)
+      - [Using Azure Key Vault](#using-azure-key-vault)
+  - [Running the Application](#running-the-application)
+  - [Example Queries](#example-queries)
+  - [Testing](#testing)
+    - [Test Categories](#test-categories)
+  - [Troubleshooting](#troubleshooting)
+    - ["No scopes found in user token"](#no-scopes-found-in-user-token)
+    - ["401 Unauthorized"](#401-unauthorized)
+    - ["405 Method Not Allowed"](#405-method-not-allowed)
+    - [Token Cache Issues](#token-cache-issues)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Overview
 
@@ -59,14 +73,17 @@ flowchart TB
     end
 
     subgraph Graph["Microsoft Graph API"]
-        DATA[(Entra Tenant Data)]
+        API[Graph REST API]
     end
+
+    DATA[(Entra Tenant Data)]
 
     Q --> CS
     CS <--> GPT
     GPT -- Tool Calls --> TE
     TE <--> SQ & GG & LP
-    SQ & GG & LP <--> DATA
+    SQ & GG & LP <--> API
+    API <--> DATA
     TC -. Converts MCP→OpenAI .-> GPT
 ```
 

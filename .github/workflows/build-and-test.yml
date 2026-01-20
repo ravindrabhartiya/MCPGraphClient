@@ -1,0 +1,43 @@
+# ============================================================================
+# GitHub Actions Workflow - Build and Test
+# ============================================================================
+# Runs on every push and pull request to the main branch.
+# Builds the solution and runs all unit tests.
+# ============================================================================
+
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore "MCP Client.sln"
+
+    - name: Build
+      run: dotnet build "MCP Client.sln" --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test "MCP Client.sln" --configuration Release --no-build --verbosity normal --logger trx --results-directory TestResults
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: TestResults/*.trx

@@ -1,122 +1,181 @@
-# Microsoft MCP Server for Enterprise - C# Client
+# MCP Enterprise Client
 
-A C# console application that connects to Microsoft's MCP (Model Context Protocol) Server for Enterprise, enabling AI-powered queries against your Microsoft Entra tenant data using Microsoft Graph API.
+A .NET 8 console application that connects to Microsoft's Model Context Protocol (MCP) Server for Enterprise, enabling AI-powered natural language queries against your Microsoft Entra tenant data using Microsoft Graph API.
 
-## ✅ What's Working
+## Table of Contents
 
-- ✅ Connects to Microsoft MCP Server at `https://mcp.svc.cloud.microsoft/enterprise`
-- ✅ Authenticates using Azure AD app registration with client credentials
-- ✅ Discovers and uses 3 MCP tools:
-  - `microsoft_graph_suggest_queries` - Discovers the right Graph API endpoints
-  - `microsoft_graph_get` - Executes Graph API calls
-  - `microsoft_graph_list_properties` - Explores Graph entity schemas
-- ✅ Interactive AI chat that automatically calls MCP tools
-- ✅ Tool calling workflow: AI determines which tools to call based on your questions
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running the Application](#running-the-application)
+- [Example Queries](#example-queries)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+
+## Overview
+
+This client application demonstrates how to:
+- Connect to Microsoft's MCP Server using SSE (Server-Sent Events) transport
+- Authenticate using Azure AD with multiple credential options
+- Integrate Azure OpenAI's GPT-4o model for natural language understanding
+- Execute Microsoft Graph API queries through AI-orchestrated tool calling
+
+## Features
+
+- ✅ **Natural Language Queries**: Ask questions in plain English about your tenant data
+- ✅ **AI-Powered Tool Orchestration**: GPT-4o automatically selects and calls the right MCP tools
+- ✅ **Multiple Authentication Methods**: Client secret, certificate, managed identity, or interactive login
+- ✅ **Token Caching**: Persistent token cache avoids repeated logins
+- ✅ **Key Vault Integration**: Optional Azure Key Vault for secure secret management
+- ✅ **Modular Architecture**: Clean separation of concerns for maintainability
 
 ## Architecture
 
 ```
-User Question → Azure OpenAI (gpt-4o) → MCP Tools → Microsoft Graph API → Your Entra Tenant Data
+┌─────────────────────────────────────────────────────────────────────┐
+│                          User Question                               │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Azure OpenAI (GPT-4o)                           │
+│   Understands question and decides which MCP tools to call          │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       MCP Server Tools                               │
+│  ┌─────────────────────┐ ┌─────────────────┐ ┌───────────────────┐  │
+│  │ suggest_queries     │ │ graph_get       │ │ list_properties   │  │
+│  │ Discovers endpoints │ │ Executes calls  │ │ Explores schemas  │  │
+│  └─────────────────────┘ └─────────────────┘ └───────────────────┘  │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Microsoft Graph API                               │
+│              Returns data from your Entra tenant                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-The application uses:
-- **Azure OpenAI**: `gpt-4o` model for natural language understanding and tool orchestration
-- **MCP Protocol**: Connects to Microsoft's enterprise MCP server via SSE (Server-Sent Events) transport
-- **Azure AD Authentication**: Service principal (app registration) with client secret credentials
-- **Tool Calling**: AI automatically invokes MCP tools to answer your questions
+### Component Flow
+
+1. **User** enters a question in natural language
+2. **ChatService** sends the question to Azure OpenAI with available tools
+3. **Azure OpenAI** decides which MCP tools to call and with what parameters
+4. **ToolExecutor** invokes the MCP tools through the SSE transport
+5. **MCP Server** executes Microsoft Graph API calls on your behalf
+6. **Results** flow back through the chain to be presented in natural language
+
+## Project Structure
+
+```
+MCP Client/
+├── MCP Client.sln              # Solution file
+├── docs/                       # Documentation
+│   ├── README.md               # This file
+│   ├── AUTH_FLOW.md            # Detailed authentication documentation
+│   └── BLOG_POST.md            # Technical blog post
+├── src/                        # Source code
+│   ├── McpEnterpriseClient.csproj
+│   ├── appsettings.json        # Configuration file
+│   ├── Program.cs              # Application entry point
+│   ├── Authentication/         # Azure AD authentication
+│   │   ├── AuthenticationService.cs
+│   │   └── TokenCacheHelper.cs
+│   ├── Chat/                   # OpenAI chat integration
+│   │   ├── ChatService.cs
+│   │   ├── ToolConverter.cs
+│   │   └── ToolExecutor.cs
+│   ├── Configuration/          # Configuration loading
+│   │   ├── AppSettings.cs
+│   │   └── ConfigurationLoader.cs
+│   ├── Mcp/                    # MCP client connection
+│   │   └── McpClientService.cs
+│   └── Utilities/              # Helper classes
+│       ├── CertificateHelper.cs
+│       └── ErrorHandler.cs
+└── test/                       # Unit tests
+    └── McpEnterpriseClient.Tests/
+        ├── Authentication/
+        ├── Chat/
+        ├── Configuration/
+        ├── Integration/
+        └── Utilities/
+```
 
 ## Prerequisites
 
-- .NET 8.0 SDK or later
-- Azure subscription
-- Azure OpenAI resource with `gpt-4o` model deployed
-- Azure AD app registration (service principal)
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or later
+- Azure subscription with:
+  - Azure OpenAI resource with `gpt-4o` model deployed
+  - Azure AD app registration with Microsoft Graph permissions
 - Microsoft Entra tenant (for querying data)
 
-## Setup Instructions
+## Installation
 
-### 1. Azure OpenAI Resource
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/ravindrabhartiya/MCPGraphClient.git
+   cd "MCP Client"
+   ```
 
-Create or use an existing Azure OpenAI resource:
-1. Go to [Azure Portal](https://portal.azure.com)
-2. Create/select an Azure OpenAI resource
-3. Deploy the `gpt-4o` model
-4. Get the API key from "Keys and Endpoint"
+2. **Restore dependencies**:
+   ```bash
+   dotnet restore
+   ```
 
-### 2. Azure AD App Registration
+3. **Build the solution**:
+   ```bash
+   dotnet build
+   ```
 
-Create an app registration for MCP authentication:
+## Configuration
 
-1. Go to **Azure Active Directory** → **App registrations** → **New registration**
-2. Name: `MCP Enterprise Client`
-3. Supported account types: **Accounts in this organizational directory only**
-4. Click **Register**
+### Azure AD App Registration
 
-#### Configure API Permissions
+1. Go to [Azure Portal](https://portal.azure.com) → **Azure Active Directory** → **App registrations**
+2. Click **New registration**
+   - Name: `MCP Enterprise Client`
+   - Supported account types: **Single tenant**
+3. Configure **API Permissions**:
+   - Click **Add a permission** → **Microsoft Graph** → **Application permissions**
+   - Add: `User.Read.All`, `Directory.Read.All`, `Group.Read.All`
+   - **Grant admin consent** (required!)
+4. Create credentials (choose one):
+   - **Client Secret**: Certificates & secrets → New client secret
+   - **Certificate**: Upload a certificate for production environments
 
-⚠️ **CRITICAL**: The app needs Microsoft Graph permissions to query tenant data:
+### Configuration Options
 
-1. Go to your app → **API permissions**
-2. Click **Add a permission** → **Microsoft Graph** → **Application permissions**
-3. Add these permissions:
-   - `User.Read.All` - Read all users' full profiles
-   - `Directory.Read.All` - Read directory data
-   - `Group.Read.All` - Read all groups (optional, for group queries)
-   - `AuditLog.Read.All` - Read audit logs (optional, for sign-in activity)
+The application supports multiple configuration sources (in priority order):
 
-4. **Click "Grant admin consent for [Your Tenant]"** ← This step is REQUIRED!
+| Source | Use Case |
+|--------|----------|
+| `appsettings.json` | Default configuration file |
+| Environment variables | CI/CD and container deployments |
+| Azure Key Vault | Production secret management |
 
-#### Create Client Secret
+#### Using appsettings.json
 
-1. Go to **Certificates & secrets** → **New client secret**
-2. Description: `MCP Client Secret`
-3. Expires: Choose duration (recommend 24 months)
-4. Click **Add**
-5. **Copy the secret value immediately** (you can't see it again)
-
-### 3. Configure Application
-
-The app supports multiple authentication methods (in priority order):
-
-| Method | Best For | Config |
-|--------|----------|--------|
-| Managed Identity | Azure deployments | `UseManagedIdentity=true` |
-| Certificate (Store) | On-premises/Windows | `CertificateThumbprint` |
-| Certificate (File) | Containers/Linux | `CertificatePath` |
-| Client Secret | Development | `ClientSecret` or env var |
-| Public Client | Development | No credentials (if enabled in Azure AD) |
-
-#### Option A: Environment Variable (Recommended for Local Dev)
-
-Keep secrets out of config files by using environment variables:
-
-```powershell
-# PowerShell - set for current session
-$env:AZURE_CLIENT_SECRET = "your-secret-value"
-dotnet run --project McpEnterpriseClient.csproj
-```
-
-```bash
-# Bash/Linux/WSL
-export AZURE_CLIENT_SECRET="your-secret-value"
-dotnet run --project McpEnterpriseClient.csproj
-```
-
-#### Option B: Configuration File
-
-Edit `appsettings.json`:
+Edit `src/appsettings.json`:
 
 ```json
 {
   "AzureAD": {
     "TenantId": "YOUR-TENANT-ID",
     "ClientId": "YOUR-CLIENT-ID",
-    "ClientSecret": "YOUR-CLIENT-SECRET"  // Or use CertificateThumbprint
+    "ClientSecret": "YOUR-CLIENT-SECRET"
   },
   "AzureOpenAI": {
     "Endpoint": "https://YOUR-RESOURCE.openai.azure.com",
     "DeploymentName": "gpt-4o",
-    "ApiKey": "YOUR-OPENAI-API-KEY"
+    "ApiKey": "YOUR-API-KEY"
   },
   "McpServer": {
     "Endpoint": "https://mcp.svc.cloud.microsoft/enterprise"
@@ -124,98 +183,138 @@ Edit `appsettings.json`:
 }
 ```
 
-#### Option C: Public Client Flow (Requires Azure AD Config)
+#### Using Environment Variables
 
-If no credentials are configured, the app uses public client flow. This requires:
+```powershell
+# PowerShell
+$env:AZURE_TENANT_ID = "your-tenant-id"
+$env:AZURE_CLIENT_ID = "your-client-id"
+$env:AZURE_CLIENT_SECRET = "your-secret"
+$env:AZURE_OPENAI_ENDPOINT = "https://your-resource.openai.azure.com"
+$env:AZURE_OPENAI_API_KEY = "your-api-key"
+```
 
-1. Go to Azure Portal → Azure AD → App registrations → Your app
-2. Go to **Authentication** blade
-3. Under "Advanced settings", set **Allow public client flows** to **Yes**
-4. Click Save
+```bash
+# Bash
+export AZURE_TENANT_ID="your-tenant-id"
+export AZURE_CLIENT_ID="your-client-id"
+export AZURE_CLIENT_SECRET="your-secret"
+export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com"
+export AZURE_OPENAI_API_KEY="your-api-key"
+```
 
-⚠️ This is less secure than using client credentials.
+#### Using Azure Key Vault
+
+Set the Key Vault URI in config or environment:
+
+```json
+{
+  "KeyVault": {
+    "Uri": "https://your-keyvault.vault.azure.net"
+  }
+}
+```
+
+The application will automatically load secrets from Key Vault using `DefaultAzureCredential`.
 
 ## Running the Application
 
 ```bash
-cd "c:\Users\ravibh\MCP Client"
-dotnet run --project McpEnterpriseClient.csproj
+cd src
+dotnet run
+```
+
+Or from the solution root:
+
+```bash
+dotnet run --project src/McpEnterpriseClient.csproj
 ```
 
 ## Example Queries
 
-Once running, you can ask questions like:
+Once connected, you can ask questions like:
 
-- "How many users are in my tenant?"
-- "List all guest users"
-- "Show me users who didn't sign in last month"
-- "Is MFA enabled for all administrators?"
-- "What groups does [user] belong to?"
+| Query | What it does |
+|-------|--------------|
+| "How many users are in my tenant?" | Counts all users |
+| "List all guest users" | Filters external users |
+| "Show me users who didn't sign in last month" | Analyzes sign-in activity |
+| "Is MFA enabled for all administrators?" | Checks security configuration |
+| "What groups does user@domain.com belong to?" | Lists group memberships |
 
-The AI will:
-1. Call `microsoft_graph_suggest_queries` to find the right API endpoint
-2. Call `microsoft_graph_get` to execute the query
-3. Present the results in natural language
+The AI automatically:
+1. Calls `microsoft_graph_suggest_queries` to find the right Graph API endpoint
+2. Calls `microsoft_graph_get` to execute the query
+3. Presents results in natural language
+
+## Testing
+
+Run all tests:
+
+```bash
+dotnet test
+```
+
+Run with coverage:
+
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Test Categories
+
+| Category | Description |
+|----------|-------------|
+| `Configuration` | Tests for AppSettings and ConfigurationLoader |
+| `Chat` | Tests for ToolConverter and tool conversion |
+| `Utilities` | Tests for ErrorHandler and CertificateHelper |
+| `Integration` | End-to-end configuration loading tests |
 
 ## Troubleshooting
 
-### "No scopes found in user token" Error
+### "No scopes found in user token"
 
-**Cause**: The app registration doesn't have Microsoft Graph API permissions or admin consent wasn't granted.
+**Cause**: Missing Microsoft Graph permissions or admin consent.
 
 **Solution**:
-1. Go to Azure Portal → Azure AD → App registrations
-2. Select your app (Client ID: a68ffc23-3384-4304-b6ed-355940bd0f2a)
-3. Go to **API permissions**
-4. Ensure `User.Read.All` and `Directory.Read.All` are added
-5. **Click "Grant admin consent for [tenant]"** - this is critical!
-6. Wait 5-10 minutes for permissions to propagate
-7. Try running the application again
+1. Go to Azure Portal → App registrations → Your app
+2. API permissions → Add `User.Read.All`, `Directory.Read.All`
+3. Click **Grant admin consent**
+4. Wait 5-10 minutes for propagation
 
-### "An error occurred invoking microsoft_graph_suggest_queries" Error
+### "401 Unauthorized"
 
-**Cause**: The parameter schema might not match what the MCP server expects.
+**Cause**: Invalid or expired credentials.
 
-**Current Status**: The application now correctly passes `intentDescription`, `relativeUrl`, and `entityName` parameters based on the tool being called.
+**Solution**:
+- Check client secret hasn't expired
+- Verify tenant ID is correct
+- Ensure app registration exists
 
-### Connection Issues
+### "405 Method Not Allowed"
 
-- Ensure your app registration has valid credentials
-- Check that the client secret hasn't expired
-- Verify the tenant ID is correct
-- Make sure you have internet connectivity to `mcp.svc.cloud.microsoft`
+**Cause**: SSE transport issue.
 
-## Authentication Flow
+**Solution**:
+- Verify MCP server endpoint is correct
+- Check network connectivity to `mcp.svc.cloud.microsoft`
 
-```
-1. App Registration → Client Credentials Flow
-2. Acquire Token (scope: https://mcp.svc.cloud.microsoft/.default)
-3. Create SSE Transport with Bearer Token
-4. Connect to MCP Server
-5. Discover Available Tools
-6. User asks question → AI calls MCP tools → MCP Server calls Graph API with delegated permissions
+### Token Cache Issues
+
+To clear the cached token:
+
+```powershell
+Remove-Item "$env:LOCALAPPDATA\McpEnterpriseClient\msal_token_cache.bin"
 ```
 
-## Key Files
+## Contributing
 
-- `Program.cs` - Main application logic, MCP client creation, chat loop
-- `appsettings.json` - Configuration (credentials, endpoints)
-- `McpEnterpriseClient.csproj` - Project file with NuGet dependencies
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit changes: `git commit -am 'Add my feature'`
+4. Push to branch: `git push origin feature/my-feature`
+5. Submit a pull request
 
-## Dependencies
+## License
 
-- `ModelContextProtocol` v0.3.0-preview.4 - MCP SDK
-- `Azure.AI.OpenAI` v2.0.0 - Azure OpenAI client
-- `Azure.Identity` v1.13.1 - Azure AD authentication
-- `Microsoft.Extensions.Configuration` - Configuration management
-
-## Learn More
-
-- [Microsoft MCP Server Overview](https://learn.microsoft.com/graph/mcp-server/overview)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
-- [Microsoft Graph API](https://learn.microsoft.com/graph/)
-- [Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/)
-
-## Status
-
-**Current Version**: 1.0 - Tool calling fully functional, requires Graph API permissions for data access
+This project is licensed under the MIT License.

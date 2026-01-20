@@ -1,11 +1,31 @@
+// ============================================================================
+// AppSettings Unit Tests
+// ============================================================================
+// Tests for the AppSettings configuration class.
+// Verifies configuration loading, validation, and environment variable fallback.
+//
+// Test Collection:
+//   Uses [Collection("Environment Variables")] to prevent parallel execution
+//   with other tests that modify environment variables.
+// ============================================================================
+
 using McpEnterpriseClient.Configuration;
 using Microsoft.Extensions.Configuration;
 
 namespace McpEnterpriseClient.Tests.Configuration;
 
 /// <summary>
-/// Test helper to temporarily clear environment variables
+/// Test helper that temporarily clears environment variables for isolated testing.
+/// Restores original values when disposed.
 /// </summary>
+/// <remarks>
+/// Usage:
+/// <code>
+/// using var scope = new EnvVarScope("VAR1", "VAR2");
+/// // VAR1 and VAR2 are null during this block
+/// // Original values restored when scope is disposed
+/// </code>
+/// </remarks>
 public class EnvVarScope : IDisposable
 {
     private readonly Dictionary<string, string?> _originalValues = new();
@@ -31,12 +51,25 @@ public class EnvVarScope : IDisposable
 }
 
 /// <summary>
-/// Unit tests for AppSettings configuration.
-/// Uses Collection to prevent parallel execution with other env var tests.
+/// Unit tests for <see cref="AppSettings"/> configuration class.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Tests verify:
+/// </para>
+/// <list type="bullet">
+/// <item>All properties are correctly loaded from configuration</item>
+/// <item>Optional values use appropriate defaults</item>
+/// <item>Required values throw when missing</item>
+/// <item>Empty/whitespace values are treated as missing</item>
+/// </list>
+/// </remarks>
 [Collection("Environment Variables")]
 public class AppSettingsTests
 {
+    /// <summary>
+    /// Verifies that all properties are correctly populated from valid configuration.
+    /// </summary>
     [Fact]
     public void Constructor_WithValidConfiguration_SetsAllProperties()
     {

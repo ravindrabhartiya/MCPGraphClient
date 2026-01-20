@@ -1,10 +1,37 @@
+// ============================================================================
+// Application Settings
+// ============================================================================
+// Strongly-typed configuration with validation. Reads from IConfiguration
+// with environment variable fallback for each setting.
+//
+// Required Settings:
+//   - TenantId: Azure AD tenant ID
+//   - ClientId: App registration client ID
+//   - AzureOpenAIEndpoint: Azure OpenAI resource endpoint
+//   - AzureOpenAIKey: API key for Azure OpenAI
+//
+// Optional Settings (have defaults):
+//   - ClientSecret: For confidential client auth (null = public client)
+//   - ModelDeploymentName: GPT model name (default: "gpt-4o")
+//   - McpServerUrl: MCP endpoint (default: Microsoft's enterprise server)
+// ============================================================================
+
 using Microsoft.Extensions.Configuration;
 
 namespace McpEnterpriseClient.Configuration;
 
 /// <summary>
-/// Strongly-typed application settings.
+/// Strongly-typed application settings with validation.
+/// Loads values from IConfiguration with environment variable fallback.
 /// </summary>
+/// <remarks>
+/// Each setting is read using a two-tier lookup:
+/// <list type="number">
+/// <item>Check IConfiguration (appsettings.json, Key Vault, etc.)</item>
+/// <item>Fall back to environment variable if config value is empty</item>
+/// </list>
+/// Required settings throw <see cref="InvalidOperationException"/> if not configured.
+/// </remarks>
 public class AppSettings
 {
     public string TenantId { get; }

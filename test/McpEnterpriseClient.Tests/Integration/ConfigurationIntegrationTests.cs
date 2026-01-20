@@ -1,12 +1,32 @@
+// ============================================================================
+// Configuration Integration Tests
+// ============================================================================
+// End-to-end tests for configuration loading behavior.
+// Tests environment variable fallback and config precedence.
+//
+// Test Collection:
+//   Uses [Collection("Environment Variables")] to prevent parallel execution
+//   with other tests that modify environment variables.
+// ============================================================================
+
 using McpEnterpriseClient.Configuration;
 using Microsoft.Extensions.Configuration;
 
 namespace McpEnterpriseClient.Tests.Integration;
 
 /// <summary>
-/// Integration tests for configuration loading.
-/// Uses Collection to prevent parallel execution with other env var tests.
+/// Integration tests for configuration loading and precedence.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Tests verify:
+/// </para>
+/// <list type="bullet">
+/// <item>Configuration can be loaded from environment variables</item>
+/// <item>appsettings.json values override environment variables</item>
+/// <item>ConfigurationLoader initializes correctly</item>
+/// </list>
+/// </remarks>
 [Collection("Environment Variables")]
 public class ConfigurationIntegrationTests
 {

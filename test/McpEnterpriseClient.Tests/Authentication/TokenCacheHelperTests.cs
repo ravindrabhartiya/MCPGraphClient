@@ -1,7 +1,21 @@
+// ============================================================================
+// TokenCacheHelper Unit Tests
+// ============================================================================
+// Tests for the TokenCacheHelper class.
+// Verifies token cache initialization and file path configuration.
+// ============================================================================
+
 using McpEnterpriseClient.Authentication;
 
 namespace McpEnterpriseClient.Tests.Authentication;
 
+/// <summary>
+/// Unit tests for <see cref="TokenCacheHelper"/> class.
+/// </summary>
+/// <remarks>
+/// Tests verify the helper can be instantiated and uses appropriate
+/// file paths for token storage.
+/// </remarks>
 public class TokenCacheHelperTests
 {
     [Fact]

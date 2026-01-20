@@ -1,10 +1,36 @@
+// ============================================================================
+// MCP Client Service
+// ============================================================================
+// Establishes connection to Microsoft's MCP (Model Context Protocol) Server
+// using SSE (Server-Sent Events) transport.
+//
+// MCP Server provides three tools for Microsoft Graph queries:
+//   1. microsoft_graph_suggest_queries - Discovers appropriate API endpoints
+//   2. microsoft_graph_get - Executes Graph API calls
+//   3. microsoft_graph_list_properties - Explores entity schemas
+//
+// Connection Flow:
+//   1. Create SSE transport with Bearer token authentication
+//   2. Connect to MCP server endpoint
+//   3. Discover and list available tools
+// ============================================================================
+
 using ModelContextProtocol.Client;
 
 namespace McpEnterpriseClient.Mcp;
 
 /// <summary>
-/// Handles MCP client creation and connection.
+/// Manages MCP client connection and tool discovery.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Uses SSE (Server-Sent Events) transport to maintain a persistent connection
+/// to Microsoft's enterprise MCP server.
+/// </para>
+/// <para>
+/// The server endpoint is: <c>https://mcp.svc.cloud.microsoft/enterprise</c>
+/// </para>
+/// </remarks>
 public class McpClientService
 {
     public async Task<IMcpClient> CreateClientAsync(string serverUrl, string accessToken)

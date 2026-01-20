@@ -1,11 +1,29 @@
+// ============================================================================
+// Configuration Loader
+// ============================================================================
+// Loads application configuration from multiple sources in priority order:
+//   1. appsettings.json - Base configuration file
+//   2. Environment variables - Override for CI/CD and containers
+//   3. Azure Key Vault (optional) - Secure secret management for production
+// ============================================================================
+
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 
 namespace McpEnterpriseClient.Configuration;
 
 /// <summary>
-/// Handles loading configuration from various sources including Key Vault.
+/// Loads and merges configuration from multiple sources.
+/// Supports appsettings.json, environment variables, and Azure Key Vault.
 /// </summary>
+/// <remarks>
+/// Configuration priority (highest to lowest):
+/// <list type="number">
+/// <item>Azure Key Vault (if configured)</item>
+/// <item>Environment variables</item>
+/// <item>appsettings.json</item>
+/// </list>
+/// </remarks>
 public class ConfigurationLoader
 {
     public IConfigurationRoot LoadConfiguration()

@@ -1,11 +1,33 @@
+// ============================================================================
+// Tool Converter
+// ============================================================================
+// Converts MCP tools to OpenAI ChatTool format for the function calling API.
+// Each MCP tool needs a JSON schema defining its parameters.
+//
+// Supported MCP Tools:
+//   - microsoft_graph_suggest_queries: Takes 'intentDescription' (string)
+//   - microsoft_graph_get: Takes 'relativeUrl' (string)
+//   - microsoft_graph_list_properties: Takes 'entityName' (string)
+// ============================================================================
+
 using ModelContextProtocol.Client;
 using OpenAI.Chat;
 
 namespace McpEnterpriseClient.Chat;
 
 /// <summary>
-/// Converts MCP tools to OpenAI ChatTool format.
+/// Converts MCP tools to OpenAI ChatTool format for function calling.
 /// </summary>
+/// <remarks>
+/// <para>
+/// OpenAI's function calling API requires a JSON schema for each tool's
+/// parameters. This class generates the appropriate schemas for known
+/// Microsoft Graph MCP tools.
+/// </para>
+/// <para>
+/// Unknown tools are created with empty parameter schemas.
+/// </para>
+/// </remarks>
 public class ToolConverter
 {
     public List<ChatTool> ConvertMcpToolsToChatTools(IList<McpClientTool> mcpTools)

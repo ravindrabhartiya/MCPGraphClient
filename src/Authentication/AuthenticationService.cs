@@ -1,11 +1,45 @@
+// ============================================================================
+// Authentication Service
+// ============================================================================
+// Handles Azure AD authentication for the MCP client. Supports multiple
+// authentication flows:
+//
+//   1. Confidential Client (with client secret)
+//      - Uses client credentials + authorization code flow
+//      - Recommended for server applications
+//
+//   2. Public Client (no secret)
+//      - Uses interactive browser authentication
+//      - Falls back when no credentials configured
+//
+// Token Caching:
+//   - Tokens are cached locally to avoid repeated logins
+//   - Silent authentication is attempted first
+//   - Interactive login only when cache miss or token expired
+// ============================================================================
+
 using Microsoft.Identity.Client;
 using System.Net;
 
 namespace McpEnterpriseClient.Authentication;
 
 /// <summary>
-/// Handles all authentication flows for Azure AD.
+/// Handles Azure AD authentication with support for multiple credential types.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The service uses MSAL (Microsoft Authentication Library) and supports:
+/// </para>
+/// <list type="bullet">
+/// <item>Silent token acquisition from cache</item>
+/// <item>Interactive browser-based login</item>
+/// <item>Authorization code flow with local HTTP listener</item>
+/// </list>
+/// <para>
+/// Tokens are requested with the MCP service scope:
+/// <c>https://mcp.svc.cloud.microsoft/MCP.User.Read.All</c>
+/// </para>
+/// </remarks>
 public class AuthenticationService
 {
     private readonly TokenCacheHelper _tokenCacheHelper = new();

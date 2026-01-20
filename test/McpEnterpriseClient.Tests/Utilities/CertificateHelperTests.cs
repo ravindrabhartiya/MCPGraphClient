@@ -1,7 +1,26 @@
+// ============================================================================
+// CertificateHelper Unit Tests
+// ============================================================================
+// Tests for the CertificateHelper utility class.
+// Verifies certificate loading behavior and error handling.
+// ============================================================================
+
 using McpEnterpriseClient.Utilities;
 
 namespace McpEnterpriseClient.Tests.Utilities;
 
+/// <summary>
+/// Unit tests for <see cref="CertificateHelper"/> class.
+/// </summary>
+/// <remarks>
+/// Tests verify:
+/// <list type="bullet">
+/// <item>Invalid thumbprints throw with helpful error messages</item>
+/// <item>Thumbprints with spaces are normalized</item>
+/// <item>Lowercase thumbprints are converted to uppercase</item>
+/// <item>Error messages include installation instructions</item>
+/// </list>
+/// </remarks>
 public class CertificateHelperTests
 {
     [Fact]

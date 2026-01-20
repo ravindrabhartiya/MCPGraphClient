@@ -1,8 +1,36 @@
+// ============================================================================
+// Error Handler
+// ============================================================================
+// Provides user-friendly error messages and troubleshooting guidance.
+// Detects common error patterns and prints specific remediation steps.
+//
+// Recognized Error Types:
+//   - 401 Unauthorized: Authentication failure, token issues
+//   - 405 Method Not Allowed: SSE transport or endpoint issues
+//
+// Error Output Includes:
+//   - Error message and type
+//   - Inner exception details (if present)
+//   - Specific remediation steps based on error type
+//   - Stack trace for debugging
+// ============================================================================
+
 namespace McpEnterpriseClient.Utilities;
 
 /// <summary>
-/// Handles and formats error messages for the application.
+/// Handles exceptions and provides user-friendly error messages with
+/// troubleshooting guidance.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The handler analyzes exception messages to detect common issues
+/// and provides specific remediation steps.
+/// </para>
+/// <para>
+/// Example: For 401 errors, it prints instructions for configuring
+/// Microsoft Graph API permissions in Azure AD.
+/// </para>
+/// </remarks>
 public static class ErrorHandler
 {
     public static void HandleException(Exception ex)

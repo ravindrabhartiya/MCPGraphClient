@@ -1,3 +1,21 @@
+// ============================================================================
+// Tool Executor
+// ============================================================================
+// Executes MCP tool calls requested by Azure OpenAI and handles responses.
+//
+// Responsibilities:
+//   - Parse tool call arguments from OpenAI
+//   - Invoke the corresponding MCP tool
+//   - Format results as ToolChatMessage for OpenAI
+//   - Detect and report server errors (401, 403, 404, etc.)
+//   - Provide debugging information for troubleshooting
+//
+// Error Handling:
+//   - Server errors are detected by parsing response JSON
+//   - Helpful hints are printed for common issues (auth, permissions)
+//   - Errors are wrapped in ToolChatMessage for OpenAI to interpret
+// ============================================================================
+
 using ModelContextProtocol.Client;
 using OpenAI.Chat;
 using System.Text.Json;
@@ -5,8 +23,22 @@ using System.Text.Json;
 namespace McpEnterpriseClient.Chat;
 
 /// <summary>
-/// Executes MCP tool calls and handles responses.
+/// Executes MCP tool calls and formats responses for Azure OpenAI.
 /// </summary>
+/// <remarks>
+/// <para>
+/// When Azure OpenAI determines a tool should be called, this class:
+/// </para>
+/// <list type="number">
+/// <item>Parses the JSON arguments from the tool call</item>
+/// <item>Finds and invokes the corresponding MCP tool</item>
+/// <item>Checks the response for server errors</item>
+/// <item>Returns results as a <see cref="ToolChatMessage"/></item>
+/// </list>
+/// <para>
+/// Debug output is printed to console for troubleshooting.
+/// </para>
+/// </remarks>
 public class ToolExecutor
 {
     private readonly IList<McpClientTool> _mcpTools;

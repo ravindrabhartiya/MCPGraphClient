@@ -1,7 +1,26 @@
+// ============================================================================
+// ErrorHandler Unit Tests
+// ============================================================================
+// Tests for the ErrorHandler utility class.
+// Verifies error messages and context-specific help are displayed correctly.
+// ============================================================================
+
 using McpEnterpriseClient.Utilities;
 
 namespace McpEnterpriseClient.Tests.Utilities;
 
+/// <summary>
+/// Unit tests for <see cref="ErrorHandler"/> class.
+/// </summary>
+/// <remarks>
+/// Tests verify:
+/// <list type="bullet">
+/// <item>Generic exceptions display error message and type</item>
+/// <item>401 errors show authentication help</item>
+/// <item>405 errors show SSE transport hints</item>
+/// <item>Inner exceptions are displayed</item>
+/// </list>
+/// </remarks>
 public class ErrorHandlerTests
 {
     [Fact]

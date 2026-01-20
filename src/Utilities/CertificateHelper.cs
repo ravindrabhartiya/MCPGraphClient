@@ -1,10 +1,41 @@
+// ============================================================================
+// Certificate Helper
+// ============================================================================
+// Loads X.509 certificates from the Windows Certificate Store for use with
+// Azure AD confidential client authentication.
+//
+// Certificate Authentication Benefits:
+//   - More secure than client secrets (no secret to leak)
+//   - Can use hardware security modules (HSM)
+//   - Longer validity periods
+//   - Better for production environments
+//
+// Search Order:
+//   1. CurrentUser\My store (user's personal certificates)
+//   2. LocalMachine\My store (computer certificates)
+// ============================================================================
+
 using System.Security.Cryptography.X509Certificates;
 
 namespace McpEnterpriseClient.Utilities;
 
 /// <summary>
-/// Helper class for loading certificates from the Windows Certificate Store.
+/// Loads certificates from the Windows Certificate Store for Azure AD authentication.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Searches both CurrentUser and LocalMachine certificate stores.
+/// Thumbprints are normalized (spaces removed, uppercase) before searching.
+/// </para>
+/// <para>
+/// To install a certificate:
+/// </para>
+/// <code>
+/// 1. Double-click the .pfx file
+/// 2. Select 'Current User' or 'Local Machine'
+/// 3. Follow the import wizard
+/// </code>
+/// </remarks>
 public static class CertificateHelper
 {
     /// <summary>

@@ -1,3 +1,19 @@
+// ============================================================================
+// Chat Service
+// ============================================================================
+// Manages the interactive conversation loop between the user and Azure OpenAI.
+// Handles the complete tool calling workflow:
+//
+//   1. User asks a question
+//   2. Azure OpenAI determines which MCP tools to call
+//   3. ToolExecutor invokes the MCP tools
+//   4. Results are fed back to Azure OpenAI
+//   5. Azure OpenAI generates a natural language response
+//
+// The conversation maintains message history for context-aware responses.
+// Tool calling can iterate up to MaxIterations (10) times per question.
+// ============================================================================
+
 using Azure.AI.OpenAI;
 using ModelContextProtocol.Client;
 using OpenAI.Chat;
@@ -5,8 +21,23 @@ using OpenAI.Chat;
 namespace McpEnterpriseClient.Chat;
 
 /// <summary>
-/// Handles the interactive chat conversation loop.
+/// Manages the interactive chat loop with Azure OpenAI and MCP tool calling.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The service maintains conversation history across multiple exchanges,
+/// allowing for context-aware follow-up questions.
+/// </para>
+/// <para>
+/// Tool calling workflow:
+/// </para>
+/// <list type="number">
+/// <item>Send user message to Azure OpenAI with available tools</item>
+/// <item>If OpenAI returns tool calls, execute them via ToolExecutor</item>
+/// <item>Feed tool results back to OpenAI</item>
+/// <item>Repeat until OpenAI provides a final text response</item>
+/// </list>
+/// </remarks>
 public class ChatService
 {
     private const int MaxIterations = 10;

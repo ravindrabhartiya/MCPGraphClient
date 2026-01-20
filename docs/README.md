@@ -122,7 +122,6 @@ MCP Client/
 │   ├── Mcp/                    # MCP client connection
 │   │   └── McpClientService.cs
 │   └── Utilities/              # Helper classes
-│       ├── CertificateHelper.cs
 │       └── ErrorHandler.cs
 └── test/                       # Unit tests
     └── McpEnterpriseClient.Tests/
@@ -291,7 +290,7 @@ dotnet test --collect:"XPlat Code Coverage"
 |----------|-------------|
 | `Configuration` | Tests for AppSettings and ConfigurationLoader |
 | `Chat` | Tests for ToolConverter and tool conversion |
-| `Utilities` | Tests for ErrorHandler and CertificateHelper |
+| `Utilities` | Tests for ErrorHandler |
 | `Integration` | End-to-end configuration loading tests |
 
 ## Troubleshooting

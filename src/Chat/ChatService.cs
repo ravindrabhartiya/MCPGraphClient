@@ -52,6 +52,12 @@ public class ChatService
     private readonly ToolExecutor _toolExecutor;
     private readonly List<ChatMessage> _messages = new();
 
+    /// <summary>
+    /// Initializes a new ChatService with OpenAI client and MCP tools.
+    /// </summary>
+    /// <param name="openAIClient">The Azure OpenAI client.</param>
+    /// <param name="deploymentName">The model deployment name (e.g., "gpt-4o").</param>
+    /// <param name="mcpTools">The list of MCP tools available for the AI to call.</param>
     public ChatService(
         AzureOpenAIClient openAIClient,
         string deploymentName,
@@ -66,6 +72,10 @@ public class ChatService
         _messages.Add(new SystemChatMessage(SystemPrompt));
     }
 
+    /// <summary>
+    /// Starts the interactive chat loop. Runs until user types 'exit' or 'quit'.
+    /// </summary>
+    /// <returns>A task that completes when the user exits.</returns>
     public async Task RunAsync()
     {
         PrintWelcome();
@@ -91,6 +101,10 @@ public class ChatService
         }
     }
 
+    /// <summary>
+    /// Processes a single user input message through the AI pipeline.
+    /// </summary>
+    /// <param name="userInput">The user's message text.</param>
     private async Task ProcessUserInputAsync(string userInput)
     {
         _messages.Add(new UserChatMessage(userInput));
@@ -111,6 +125,12 @@ public class ChatService
         }
     }
 
+    /// <summary>
+    /// Executes the conversation loop with tool calling until a final response is received.
+    /// </summary>
+    /// <remarks>
+    /// Iterates up to <see cref="MaxIterations"/> times, calling tools as requested by the AI.
+    /// </remarks>
     private async Task ProcessConversationLoopAsync()
     {
         int iteration = 0;
@@ -142,6 +162,10 @@ public class ChatService
         PrintMaxIterationsWarning();
     }
 
+    /// <summary>
+    /// Handles tool calls from the AI response by executing each tool.
+    /// </summary>
+    /// <param name="responseMessage">The AI response containing tool calls.</param>
     private async Task HandleToolCallsAsync(OpenAI.Chat.ChatCompletion responseMessage)
     {
         _messages.Add(new AssistantChatMessage(responseMessage));
@@ -160,6 +184,10 @@ public class ChatService
         }
     }
 
+    /// <summary>
+    /// Handles the final text response from the AI (no more tool calls).
+    /// </summary>
+    /// <param name="responseMessage">The AI response containing the final text.</param>
     private void HandleFinalResponse(OpenAI.Chat.ChatCompletion responseMessage)
     {
         var textContent = responseMessage.Content[0].Text;
@@ -169,10 +197,18 @@ public class ChatService
         _messages.Add(new AssistantChatMessage(responseMessage));
     }
 
+    /// <summary>
+    /// Checks if the user input is an exit command.
+    /// </summary>
+    /// <param name="input">The user input to check.</param>
+    /// <returns>True if the input is 'exit' or 'quit' (case-insensitive).</returns>
     private static bool IsExitCommand(string input) =>
         input.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
         input.Equals("quit", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Prints the welcome message with example queries.
+    /// </summary>
     private static void PrintWelcome()
     {
         Console.WriteLine("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");

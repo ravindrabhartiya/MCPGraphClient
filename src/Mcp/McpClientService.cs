@@ -33,6 +33,16 @@ namespace McpEnterpriseClient.Mcp;
 /// </remarks>
 public class McpClientService
 {
+    /// <summary>
+    /// Creates and connects an MCP client to the specified server.
+    /// </summary>
+    /// <param name="serverUrl">The MCP server endpoint URL.</param>
+    /// <param name="accessToken">The Bearer token for authentication.</param>
+    /// <returns>A connected <see cref="IMcpClient"/> instance.</returns>
+    /// <remarks>
+    /// Uses SSE (Server-Sent Events) transport with the access token
+    /// passed in the Authorization header.
+    /// </remarks>
     public async Task<IMcpClient> CreateClientAsync(string serverUrl, string accessToken)
     {
         Console.WriteLine("\n[Step 2] Connecting to MCP server...");
@@ -56,6 +66,14 @@ public class McpClientService
         return client;
     }
 
+    /// <summary>
+    /// Lists all available tools from the connected MCP server.
+    /// </summary>
+    /// <param name="client">The connected MCP client.</param>
+    /// <returns>A list of available <see cref="McpClientTool"/> instances.</returns>
+    /// <remarks>
+    /// Prints each tool's name and description to the console.
+    /// </remarks>
     public async Task<IList<McpClientTool>> ListToolsAsync(IMcpClient client)
     {
         Console.WriteLine("Available MCP Tools:");

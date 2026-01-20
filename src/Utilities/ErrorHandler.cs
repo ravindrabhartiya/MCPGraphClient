@@ -33,6 +33,13 @@ namespace McpEnterpriseClient.Utilities;
 /// </remarks>
 public static class ErrorHandler
 {
+    /// <summary>
+    /// Handles an exception by printing formatted error details and troubleshooting hints.
+    /// </summary>
+    /// <param name="ex">The exception to handle.</param>
+    /// <remarks>
+    /// Detects common error patterns (401, 405) and prints specific remediation steps.
+    /// </remarks>
     public static void HandleException(Exception ex)
     {
         Console.ForegroundColor = ConsoleColor.Red;
@@ -57,6 +64,9 @@ public static class ErrorHandler
         Console.ResetColor();
     }
 
+    /// <summary>
+    /// Prints authentication error guidance including Azure AD configuration steps.
+    /// </summary>
     private static void PrintAuthenticationError()
     {
         Console.WriteLine("\n⚠️  Authentication Error:");
@@ -71,6 +81,9 @@ public static class ErrorHandler
         Console.WriteLine("\nFor more info: https://learn.microsoft.com/graph/mcp-server/overview");
     }
 
+    /// <summary>
+    /// Prints guidance for 405 Method Not Allowed errors related to SSE transport.
+    /// </summary>
     private static void PrintMethodNotAllowedError()
     {
         Console.WriteLine("\n⚠️  The MCP endpoint may not support SSE transport.");

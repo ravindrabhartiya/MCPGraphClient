@@ -38,6 +38,11 @@ public class TokenCacheHelper
     /// Enables persistent token caching to a file.
     /// Tokens are cached locally so users don't need to re-authenticate every time.
     /// </summary>
+    /// <param name="tokenCache">The MSAL token cache to configure.</param>
+    /// <remarks>
+    /// Registers before/after access callbacks that serialize tokens to disk.
+    /// Creates the cache directory if it doesn't exist.
+    /// </remarks>
     public void EnableTokenCache(ITokenCache tokenCache)
     {
         var cacheDir = Path.GetDirectoryName(TokenCacheFile);

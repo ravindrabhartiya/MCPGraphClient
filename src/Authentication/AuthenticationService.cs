@@ -45,6 +45,17 @@ public class AuthenticationService
     private readonly TokenCacheHelper _tokenCacheHelper = new();
     private readonly string[] _scopes = { "https://mcp.svc.cloud.microsoft/MCP.User.Read.All", "offline_access" };
 
+    /// <summary>
+    /// Authenticates a user with Azure AD and returns an access token.
+    /// </summary>
+    /// <param name="tenantId">The Azure AD tenant ID.</param>
+    /// <param name="clientId">The application (client) ID from app registration.</param>
+    /// <param name="clientSecret">The client secret (null for public client flow).</param>
+    /// <returns>The authentication result containing the access token.</returns>
+    /// <remarks>
+    /// Uses confidential client flow if secret is provided, otherwise public client flow.
+    /// Attempts silent authentication first using cached tokens.
+    /// </remarks>
     public async Task<AuthenticationResult> AuthenticateAsync(
         string tenantId,
         string clientId,
@@ -70,6 +81,13 @@ public class AuthenticationService
         return authResult;
     }
 
+    /// <summary>
+    /// Authenticates using confidential client (with client secret).
+    /// </summary>
+    /// <param name="tenantId">The Azure AD tenant ID.</param>
+    /// <param name="clientId">The application (client) ID.</param>
+    /// <param name="clientSecret">The client secret.</param>
+    /// <returns>The authentication result.</returns>
     private async Task<AuthenticationResult> AuthenticateWithConfidentialClientAsync(
         string tenantId,
         string clientId,
@@ -89,6 +107,15 @@ public class AuthenticationService
         return await TryAcquireTokenSilentOrInteractiveAsync(app);
     }
 
+    /// <summary>
+    /// Authenticates using public client (interactive browser login).
+    /// </summary>
+    /// <param name="tenantId">The Azure AD tenant ID.</param>
+    /// <param name="clientId">The application (client) ID.</param>
+    /// <returns>The authentication result.</returns>
+    /// <remarks>
+    /// Used when no client secret is configured. Opens a browser for user login.
+    /// </remarks>
     private async Task<AuthenticationResult> AuthenticateWithPublicClientAsync(
         string tenantId,
         string clientId)
@@ -108,6 +135,11 @@ public class AuthenticationService
         return await TryAcquireTokenSilentOrInteractiveAsync(app);
     }
 
+    /// <summary>
+    /// Attempts silent token acquisition, falling back to interactive auth code flow.
+    /// </summary>
+    /// <param name="app">The confidential client application.</param>
+    /// <returns>The authentication result.</returns>
     private async Task<AuthenticationResult> TryAcquireTokenSilentOrInteractiveAsync(
         IConfidentialClientApplication app)
     {
@@ -142,6 +174,11 @@ public class AuthenticationService
         return await AcquireTokenInteractiveWithAuthCodeAsync(app);
     }
 
+    /// <summary>
+    /// Attempts silent token acquisition, falling back to interactive browser login.
+    /// </summary>
+    /// <param name="app">The public client application.</param>
+    /// <returns>The authentication result.</returns>
     private async Task<AuthenticationResult> TryAcquireTokenSilentOrInteractiveAsync(
         IPublicClientApplication app)
     {
@@ -180,6 +217,15 @@ public class AuthenticationService
             .ExecuteAsync();
     }
 
+    /// <summary>
+    /// Acquires a token using authorization code flow with a local HTTP listener.
+    /// </summary>
+    /// <param name="app">The confidential client application.</param>
+    /// <returns>The authentication result.</returns>
+    /// <remarks>
+    /// Opens a browser for user login, listens on localhost:8400 for the callback,
+    /// then exchanges the authorization code for tokens.
+    /// </remarks>
     private async Task<AuthenticationResult> AcquireTokenInteractiveWithAuthCodeAsync(
         IConfidentialClientApplication app)
     {
@@ -219,6 +265,13 @@ public class AuthenticationService
         return await app.AcquireTokenByAuthorizationCode(_scopes, authCode).ExecuteAsync();
     }
 
+    /// <summary>
+    /// Sends an HTML response to the browser after authentication redirect.
+    /// </summary>
+    /// <param name="context">The HTTP listener context.</param>
+    /// <param name="authCode">The authorization code (null if auth failed).</param>
+    /// <param name="error">The error code (if auth failed).</param>
+    /// <param name="errorDescription">The error description (if auth failed).</param>
     private static async Task SendBrowserResponse(
         HttpListenerContext context,
         string? authCode,
@@ -236,6 +289,9 @@ public class AuthenticationService
         response.Close();
     }
 
+    /// <summary>
+    /// Prints a visual prompt indicating browser authentication is required.
+    /// </summary>
     private static void PrintBrowserPrompt()
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -246,6 +302,10 @@ public class AuthenticationService
         Console.ForegroundColor = ConsoleColor.Cyan;
     }
 
+    /// <summary>
+    /// Prints authentication success details including username and token expiry.
+    /// </summary>
+    /// <param name="authResult">The authentication result to display.</param>
     private static void PrintAuthSuccess(AuthenticationResult authResult)
     {
         Console.ForegroundColor = ConsoleColor.Green;

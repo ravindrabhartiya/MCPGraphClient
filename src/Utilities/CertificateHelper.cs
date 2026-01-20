@@ -42,6 +42,9 @@ public static class CertificateHelper
     /// Loads a certificate from the Windows Certificate Store by thumbprint.
     /// Searches both CurrentUser and LocalMachine stores.
     /// </summary>
+    /// <param name="thumbprint">The certificate thumbprint (spaces and case are normalized).</param>
+    /// <returns>The loaded <see cref="X509Certificate2"/>.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when certificate is not found.</exception>
     public static X509Certificate2 LoadFromStore(string thumbprint)
     {
         // Normalize thumbprint (remove spaces, convert to uppercase)
@@ -63,6 +66,12 @@ public static class CertificateHelper
             "  3. Follow the wizard to import");
     }
 
+    /// <summary>
+    /// Searches a specific certificate store for a certificate by thumbprint.
+    /// </summary>
+    /// <param name="thumbprint">The normalized thumbprint to search for.</param>
+    /// <param name="location">The store location (CurrentUser or LocalMachine).</param>
+    /// <returns>The certificate if found, otherwise null.</returns>
     private static X509Certificate2? FindInStore(string thumbprint, StoreLocation location)
     {
         using var store = new X509Store(StoreName.My, location);

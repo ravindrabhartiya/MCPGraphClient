@@ -26,6 +26,14 @@ namespace McpEnterpriseClient.Configuration;
 /// </remarks>
 public class ConfigurationLoader
 {
+    /// <summary>
+    /// Loads configuration from appsettings.json, environment variables, and optionally Azure Key Vault.
+    /// </summary>
+    /// <returns>The merged <see cref="IConfigurationRoot"/> containing all settings.</returns>
+    /// <remarks>
+    /// If <c>KeyVault:Uri</c> or <c>AZURE_KEYVAULT_URI</c> is configured,
+    /// secrets are loaded from Key Vault using <see cref="Azure.Identity.DefaultAzureCredential"/>.
+    /// </remarks>
     public IConfigurationRoot LoadConfiguration()
     {
         var configBuilder = new ConfigurationBuilder()
@@ -46,6 +54,13 @@ public class ConfigurationLoader
         return baseConfig;
     }
 
+    /// <summary>
+    /// Loads configuration with Azure Key Vault integration.
+    /// </summary>
+    /// <param name="configBuilder">The configuration builder to add Key Vault to.</param>
+    /// <param name="baseConfig">The base configuration (fallback if Key Vault fails).</param>
+    /// <param name="keyVaultUri">The URI of the Azure Key Vault.</param>
+    /// <returns>Configuration with Key Vault secrets merged in.</returns>
     private IConfigurationRoot LoadWithKeyVault(
         IConfigurationBuilder configBuilder,
         IConfigurationRoot baseConfig,

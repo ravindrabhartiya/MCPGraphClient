@@ -30,6 +30,11 @@ namespace McpEnterpriseClient.Chat;
 /// </remarks>
 public class ToolConverter
 {
+    /// <summary>
+    /// Converts a list of MCP tools to OpenAI ChatTool format.
+    /// </summary>
+    /// <param name="mcpTools">The MCP tools to convert.</param>
+    /// <returns>A list of <see cref="ChatTool"/> objects for OpenAI function calling.</returns>
     public List<ChatTool> ConvertMcpToolsToChatTools(IList<McpClientTool> mcpTools)
     {
         var chatTools = new List<ChatTool>();
@@ -49,6 +54,11 @@ public class ToolConverter
         return chatTools;
     }
 
+    /// <summary>
+    /// Creates a JSON schema for the tool's parameters based on tool name.
+    /// </summary>
+    /// <param name="toolName">The name of the MCP tool.</param>
+    /// <returns>Binary JSON data representing the parameter schema.</returns>
     private static BinaryData CreateParameterSchema(string toolName)
     {
         var schema = new

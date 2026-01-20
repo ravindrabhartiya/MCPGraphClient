@@ -43,11 +43,20 @@ public class ToolExecutor
 {
     private readonly IList<McpClientTool> _mcpTools;
 
+    /// <summary>
+    /// Initializes a new ToolExecutor with the available MCP tools.
+    /// </summary>
+    /// <param name="mcpTools">The list of MCP tools that can be executed.</param>
     public ToolExecutor(IList<McpClientTool> mcpTools)
     {
         _mcpTools = mcpTools;
     }
 
+    /// <summary>
+    /// Executes an MCP tool call and returns the result as a chat message.
+    /// </summary>
+    /// <param name="toolCall">The tool call from Azure OpenAI.</param>
+    /// <returns>A <see cref="ToolChatMessage"/> containing the tool result.</returns>
     public async Task<ToolChatMessage> ExecuteToolCallAsync(ChatToolCall toolCall)
     {
         var toolName = toolCall.FunctionName;
@@ -84,6 +93,11 @@ public class ToolExecutor
         }
     }
 
+    /// <summary>
+    /// Prints debug information about the tool being called.
+    /// </summary>
+    /// <param name="toolName">The name of the tool.</param>
+    /// <param name="toolArgsString">The JSON arguments string.</param>
     private static void PrintDebugInfo(string toolName, string toolArgsString)
     {
         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -92,6 +106,10 @@ public class ToolExecutor
         Console.ResetColor();
     }
 
+    /// <summary>
+    /// Prints the tool result (truncated if too long).
+    /// </summary>
+    /// <param name="resultJson">The JSON result from the tool.</param>
     private static void PrintResult(string resultJson)
     {
         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -99,6 +117,12 @@ public class ToolExecutor
         Console.ResetColor();
     }
 
+    /// <summary>
+    /// Checks the tool response for server-side errors and prints diagnostics.
+    /// </summary>
+    /// <param name="resultJson">The JSON result to check.</param>
+    /// <param name="toolName">The name of the tool (for error reporting).</param>
+    /// <param name="toolArgsString">The arguments (for error reporting).</param>
     private static void CheckForServerErrors(string resultJson, string toolName, string toolArgsString)
     {
         try
@@ -140,6 +164,11 @@ public class ToolExecutor
         catch { /* Ignore JSON parsing errors */ }
     }
 
+    /// <summary>
+    /// Checks if text contains error indicators.
+    /// </summary>
+    /// <param name="text">The text to check.</param>
+    /// <returns>True if the text appears to be an error message.</returns>
     private static bool IsErrorText(string text) =>
         text.StartsWith("Error", StringComparison.OrdinalIgnoreCase) ||
         text.Contains("error:", StringComparison.OrdinalIgnoreCase) ||
@@ -148,6 +177,12 @@ public class ToolExecutor
         text.Contains("unauthorized", StringComparison.OrdinalIgnoreCase) ||
         text.Contains("forbidden", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Prints a formatted server error message with diagnostic hints.
+    /// </summary>
+    /// <param name="toolName">The name of the tool that failed.</param>
+    /// <param name="toolArgsString">The arguments passed to the tool.</param>
+    /// <param name="serverErrorMessage">The error message from the server.</param>
     private static void PrintServerError(string toolName, string toolArgsString, string? serverErrorMessage)
     {
         Console.ForegroundColor = ConsoleColor.Red;
@@ -181,6 +216,9 @@ public class ToolExecutor
         Console.ResetColor();
     }
 
+    /// <summary>
+    /// Prints hints for token scope mismatch errors.
+    /// </summary>
     private static void PrintScopeMismatchHint()
     {
         Console.WriteLine($"    ║ ────────────────────────────────────────────────────────────");
@@ -196,6 +234,14 @@ public class ToolExecutor
         Console.WriteLine($"    ║ 3. Check if MCP server supports app-only authentication");
     }
 
+    /// <summary>
+    /// Handles exceptions from tool execution and returns an error message.
+    /// </summary>
+    /// <param name="toolCallId">The ID of the tool call.</param>
+    /// <param name="toolName">The name of the tool that failed.</param>
+    /// <param name="toolArgsString">The arguments passed to the tool.</param>
+    /// <param name="ex">The exception that occurred.</param>
+    /// <returns>A <see cref="ToolChatMessage"/> containing the error details.</returns>
     private static ToolChatMessage HandleToolException(
         string toolCallId,
         string toolName,
@@ -215,6 +261,12 @@ public class ToolExecutor
         return new ToolChatMessage(toolCallId, JsonSerializer.Serialize(errorResult));
     }
 
+    /// <summary>
+    /// Prints detailed error information for a failed tool call.
+    /// </summary>
+    /// <param name="toolName">The name of the tool that failed.</param>
+    /// <param name="toolArgsString">The arguments passed to the tool.</param>
+    /// <param name="ex">The exception that occurred.</param>
     private static void PrintToolError(string toolName, string toolArgsString, Exception ex)
     {
         Console.ForegroundColor = ConsoleColor.Red;
@@ -252,6 +304,10 @@ public class ToolExecutor
         Console.ResetColor();
     }
 
+    /// <summary>
+    /// Prints helpful hints based on HTTP error codes in the message.
+    /// </summary>
+    /// <param name="errorMessage">The error message to analyze.</param>
     private static void PrintHttpHints(string errorMessage)
     {
         var errorMsg = errorMessage.ToLowerInvariant();

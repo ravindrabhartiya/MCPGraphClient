@@ -1,8 +1,8 @@
 # ============================================================================
 # GitHub Actions Workflow - Build and Test
 # ============================================================================
-# Runs on every push and pull request to the main branch.
-# Builds the solution and runs all unit tests.
+# Automatically runs on every push and pull request to the main branch.
+# Builds the solution and runs all unit tests to ensure code quality.
 # ============================================================================
 
 name: Build and Test
